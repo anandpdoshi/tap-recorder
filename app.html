@@ -1,0 +1,173 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Flask-SocketIO Test</title>
+    <script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.slim.js"></script>
+    <script type="text/javascript" src="/static/vue.js"></script>
+</head>
+<body>
+    <div id="app">
+        <p>{{ message }}</p>
+        <button v-on:click="toggleRecord">{{ btn_message }}</button>
+        <br>
+        <ul>
+            <li v-for="rec in recordings">
+                <audio :src="rec.filename" controls>
+                </audio>
+                <!-- <span>{{ rec.filename }}</span>
+                <button v-on:click="play" :filename="rec.filename">Play</button> -->
+            </li>
+        </ul>
+    </div>
+
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function() {
+            namespace = '/test';
+            var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+
+            socket.on('connect', function() {
+                socket.emit('my event', {data: 'I\'m connected!'});
+            });
+            socket.on('disconnect', function() {
+                $('#log').append('<br>Disconnected');
+            });
+            socket.on('my response', function(msg) {
+                $('#log').append('<br>Received: ' + msg.data);
+            });
+
+            // event handler for server sent data
+            // the data is displayed in the "Received" section of the page
+            // handlers for the different forms in the page
+            // these send data to the server in a variety of ways
+            $('form#emit').submit(function(event) {
+                socket.emit('my event', {data: $('#emit_data').val()});
+                return false;
+            });
+            $('form#broadcast').submit(function(event) {
+                socket.emit('my broadcast event', {data: $('#broadcast_data').val()});
+                return false;
+            });
+            $('form#join').submit(function(event) {
+                socket.emit('join', {room: $('#join_room').val()});
+                return false;
+            });
+            $('form#leave').submit(function(event) {
+                socket.emit('leave', {room: $('#leave_room').val()});
+                return false;
+            });
+            $('form#send_room').submit(function(event) {
+                socket.emit('my room event', {room: $('#room_name').val(), data: $('#room_data').val()});
+                return false;
+            });
+            $('form#close').submit(function(event) {
+                socket.emit('close room', {room: $('#close_room').val()});
+                return false;
+            });
+            $('form#disconnect').submit(function(event) {
+                socket.emit('disconnect request');
+                return false;
+            });
+
+            window.app = new Vue({
+                el: '#app',
+                data: {
+                    message: 'Hello Vue.js!',
+                    btn_message: 'Start',
+                    recording: false,
+                    recordings: []
+                },
+                methods: {
+                    toggleRecord: function () {
+                        if (this.recording) {
+                            socket.emit('stop recording');
+                        } else {
+                            socket.emit('start recording');
+                        }
+
+                        // this.message = this.message.split('').reverse().join('');
+                        // this.btn_message = this.btn_message.split('').reverse().join('');
+                    },
+                    toggle_btn_message: function() {
+                        var new_btn_message = this.recording ? 'Stop' : 'Start';
+                        this.btn_message = new_btn_message;
+                    },
+                    play: function() {
+                        console.log(this);
+                    }
+                }
+            });
+
+            socket.on('started recording', function(data) {
+                console.log('started recording', data);
+                window.app.recording = true;
+                window.app.toggle_btn_message();
+            });
+
+            socket.on('stopped recording', function(data) {
+                console.log('stopped recording', data);
+                window.app.recording = false;
+                window.app.toggle_btn_message();
+                window.app.recordings.push({
+                    filename: data.filename
+                });
+            });
+
+            socket.on('done recording', function(data) {
+                console.log('done recording', data);
+                // window.app.recording = false;
+                // window.app.toggle_btn_message();
+            });
+
+            socket.emit('load recordings');
+
+            socket.on('recordings', function(data) {
+                for (var i=0, j=data.recordings.length; i < j; i++) {
+                    window.app.recordings.push({
+                        filename: data.recordings[i]
+                    });
+                }
+            });
+        });
+    </script>
+
+
+    <h1>Flask-SocketIO Test</h1>
+    <h2>Send:</h2>
+    <form id="record" method="POST" action='#'>
+        <input type="text" name="emit_data" id="emit_data" placeholder="Message">
+        <input type="submit" value="Echo">
+    </form>
+
+    <form id="emit" method="POST" action='#'>
+        <input type="text" name="emit_data" id="emit_data" placeholder="Message">
+        <input type="submit" value="Echo">
+    </form>
+    <form id="broadcast" method="POST" action='#'>
+        <input type="text" name="broadcast_data" id="broadcast_data" placeholder="Message">
+        <input type="submit" value="Broadcast">
+    </form>
+    <form id="join" method="POST" action='#'>
+        <input type="text" name="join_room" id="join_room" placeholder="Room Name">
+        <input type="submit" value="Join Room">
+    </form>
+    <form id="leave" method="POST" action='#'>
+        <input type="text" name="leave_room" id="leave_room" placeholder="Room Name">
+        <input type="submit" value="Leave Room">
+    </form>
+    <form id="send_room" method="POST" action='#'>
+        <input type="text" name="room_name" id="room_name" placeholder="Room Name">
+        <input type="text" name="room_data" id="room_data" placeholder="Message">
+        <input type="submit" value="Send to Room">
+    </form>
+    <form id="close" method="POST" action="#">
+        <input type="text" name="close_room" id="close_room" placeholder="Room Name">
+        <input type="submit" value="Close Room">
+    </form>
+    <form id="disconnect" method="POST" action="#">
+        <input type="submit" value="Disconnect">
+    </form>
+    <h2>Receive:</h2>
+    <div><p id="log"></p></div>
+</body>
+</html>
