@@ -7,7 +7,7 @@
     <script type="text/javascript" src="/static/vue.js"></script>
 </head>
 <body>
-    <div id="app">
+    <!-- <div id="app">
         <p>{{ message }}</p>
         <button v-on:click="toggleRecord">{{ btn_message }}</button>
         <br>
@@ -15,10 +15,12 @@
             <li v-for="rec in recordings">
                 <audio :src="rec.filename" controls>
                 </audio>
-                <!-- <span>{{ rec.filename }}</span>
-                <button v-on:click="play" :filename="rec.filename">Play</button> -->
             </li>
         </ul>
+    </div> -->
+
+    <div id="app">
+        <h1>{{ event_type }} {{ event_value }}</h1>
     </div>
 
     <script type="text/javascript">
@@ -69,70 +71,92 @@
                 return false;
             });
 
+            // window.app = new Vue({
+            //     el: '#app',
+            //     data: {
+            //         message: 'Hello Vue.js!',
+            //         btn_message: 'Start',
+            //         recording: false,
+            //         recordings: []
+            //     },
+            //     methods: {
+            //         toggleRecord: function () {
+            //             if (this.recording) {
+            //                 socket.emit('stop recording');
+            //             } else {
+            //                 socket.emit('start recording');
+            //             }
+            //
+            //             // this.message = this.message.split('').reverse().join('');
+            //             // this.btn_message = this.btn_message.split('').reverse().join('');
+            //         },
+            //         toggle_btn_message: function() {
+            //             var new_btn_message = this.recording ? 'Stop' : 'Start';
+            //             this.btn_message = new_btn_message;
+            //         },
+            //         play: function() {
+            //             console.log(this);
+            //         }
+            //     }
+            // });
+
+            // socket.on('started recording', function(data) {
+            //     console.log('started recording', data);
+            //     window.app.recording = true;
+            //     window.app.toggle_btn_message();
+            // });
+            //
+            // socket.on('stopped recording', function(data) {
+            //     console.log('stopped recording', data);
+            //     window.app.recording = false;
+            //     window.app.toggle_btn_message();
+            //     window.app.recordings.push({
+            //         filename: data.filename
+            //     });
+            // });
+            //
+            // socket.on('done recording', function(data) {
+            //     console.log('done recording', data);
+            //     // window.app.recording = false;
+            //     // window.app.toggle_btn_message();
+            // });
+            //
+            // socket.emit('load recordings');
+            //
+            // socket.on('recordings', function(data) {
+            //     for (var i=0, j=data.recordings.length; i < j; i++) {
+            //         window.app.recordings.push({
+            //             filename: data.recordings[i]
+            //         });
+            //     }
+            // });
+
             window.app = new Vue({
                 el: '#app',
                 data: {
-                    message: 'Hello Vue.js!',
-                    btn_message: 'Start',
-                    recording: false,
-                    recordings: []
+                    event_type: '',
+                    event_value: ''
                 },
                 methods: {
-                    toggleRecord: function () {
-                        if (this.recording) {
-                            socket.emit('stop recording');
-                        } else {
-                            socket.emit('start recording');
-                        }
-
-                        // this.message = this.message.split('').reverse().join('');
-                        // this.btn_message = this.btn_message.split('').reverse().join('');
-                    },
-                    toggle_btn_message: function() {
-                        var new_btn_message = this.recording ? 'Stop' : 'Start';
-                        this.btn_message = new_btn_message;
-                    },
-                    play: function() {
-                        console.log(this);
+                    eventReceived: function(event_type, event_value) {
+                        // console.log('event received');
+                        this.event_type = event_type;
+                        this.event_value = event_value==="1" ? 'on' : 'off';
+                        console.log(event_type, event_value);
+                        console.log(this.event_type, this.event_value);
                     }
                 }
             });
 
-            socket.on('started recording', function(data) {
-                console.log('started recording', data);
-                window.app.recording = true;
-                window.app.toggle_btn_message();
-            });
-
-            socket.on('stopped recording', function(data) {
-                console.log('stopped recording', data);
-                window.app.recording = false;
-                window.app.toggle_btn_message();
-                window.app.recordings.push({
-                    filename: data.filename
-                });
-            });
-
-            socket.on('done recording', function(data) {
-                console.log('done recording', data);
-                // window.app.recording = false;
-                // window.app.toggle_btn_message();
-            });
-
-            socket.emit('load recordings');
-
-            socket.on('recordings', function(data) {
-                for (var i=0, j=data.recordings.length; i < j; i++) {
-                    window.app.recordings.push({
-                        filename: data.recordings[i]
-                    });
-                }
+            socket.on('event', function(data) {
+                console.log(data);
+                window.app.eventReceived(data.event_type, data.event_value);
             });
         });
     </script>
 
 
-    <h1>Flask-SocketIO Test</h1>
+    <!-- <h1>Flask-SocketIO Test</h1>
     <h2>Send:</h2>
     <form id="record" method="POST" action='#'>
         <input type="text" name="emit_data" id="emit_data" placeholder="Message">
@@ -168,6 +192,6 @@
         <input type="submit" value="Disconnect">
     </form>
     <h2>Receive:</h2>
-    <div><p id="log"></p></div>
+    <div><p id="log"></p></div> -->
 </body>
 </html>

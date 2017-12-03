@@ -23,6 +23,18 @@ async def index(request):
         return html(f.read())
 
 
+@app.route('/event')
+async def index(request):
+    # print(request.args)
+    event_type = request.args.get('event_type')
+    event_value = request.args.get('event_value')
+    await sio.emit('event', {
+        'event_type': event_type,
+        'event_value': event_value
+    }, namespace='/test')
+    return html('got event {0} {1}'.format(event_type, event_value))
+
+
 @sio.on('start recording', namespace='/test')
 async def start_recording(sid):
     global recording
