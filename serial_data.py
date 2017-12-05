@@ -10,6 +10,7 @@ try:
         data = arduino.readline()
         if data:
             state = data.strip().decode('utf-8').split(" = ")
+            print(state)
             if len(state) == 2:
                 command, value = state
                 requests.get("http://localhost:8000/event", params={

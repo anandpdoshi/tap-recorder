@@ -249,14 +249,13 @@
                         this.event_type = event_type;
                         if (['left', 'right'].indexOf(this.event_type) !== -1) {
                             this.event_value = 'pressed';
+                            this.playing = false;
                         } else {
                             if (this.event_type=='play') {
                                 event_value = this.playing ? '0' : '1';
                                 this.playing = event_value==='1';
-                            } else if (['left', 'right'].indexOf(this.event_type)) {
-                                this.playing = false;
                             }
-
+                            
                             this.event_value = event_value==="1" ? 'on' : 'off';
                         }
                         console.log(event_type, event_value);
