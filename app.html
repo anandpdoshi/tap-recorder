@@ -2,7 +2,23 @@
 <html>
 <head>
     <title>Flask-SocketIO Test</title>
+
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/static/css/waveform-playlist.css">
+    <style media="screen">
+        .waveform-playlist header {
+            margin: 30px 0;
+        }
+
+        .waveform-playlist header .btn-group {
+            margin-right: 15px;
+        }
+    </style>
+
+
     <script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.slim.js"></script>
     <script type="text/javascript" src="/static/vue.js"></script>
 </head>
@@ -19,8 +35,94 @@
         </ul>
     </div> -->
 
-    <div id="app">
-        <h1>{{ event_type }} {{ event_value }}</h1>
+    <div class="container waveform-playlist">
+        <header>
+            <div class="playlist-toolbar">
+                <div class="btn-group">
+                    <span class="btn-record btn btn-danger disabled">
+                        <i class="fa fa-microphone"></i>
+                    </span>
+                </div>
+                <div class="btn-group">
+                    <span class="btn-play btn btn-success">
+                        <i class="fa fa-play"></i>
+                    </span>
+                    <span class="btn-pause btn btn-warning">
+                        <i class="fa fa-pause"></i>
+                    </span>
+                    <span class="btn-stop btn btn-danger">
+                        <i class="fa fa-stop"></i>
+                    </span>
+                </div>
+                <div class="btn-group">
+                    <span class="btn-rewind btn btn-success">
+                        <i class="fa fa-fast-backward"></i>
+                    </span>
+                    <span class="btn-fast-forward btn btn-success">
+                        <i class="fa fa-fast-forward"></i>
+                    </span>
+                </div>
+                <div class="btn-group">
+                    <span title="zoom in" class="btn-zoom-in btn btn-default">
+                        <i class="fa fa-search-plus"></i>
+                    </span>
+                    <span title="zoom out" class="btn-zoom-out btn btn-default">
+                        <i class="fa fa-search-minus"></i>
+                    </span>
+                </div>
+                <div class="btn-group btn-playlist-state-group">
+                    <span class="btn-cursor btn btn-default active" title="select cursor">
+                        <i class="fa fa-headphones"></i>
+                    </span>
+                    <span class="btn-select btn btn-default" title="select audio region">
+                        <i class="fa fa-italic"></i>
+                    </span>
+                    <span class="btn-shift btn btn-default" title="shift audio in time">
+                        <i class="fa fa-arrows-h"></i>
+                    </span>
+                    <span class="btn-fadein btn btn-default" title="set audio fade in">
+                        <i class="fa fa-long-arrow-left"></i>
+                    </span>
+                    <span class="btn-fadeout btn btn-default" title="set audio fade out">
+                        <i class="fa fa-long-arrow-right"></i>
+                    </span>
+                </div>
+                <!-- <div class="btn-group btn-fade-state-group">
+                    <span class="btn btn-default btn-logarithmic active">logarithmic</span>
+                    <span class="btn btn-default btn-linear">linear</span>
+                    <span class="btn btn-default btn-exponential">exponential</span>
+                    <span class="btn btn-default btn-scurve">s-curve</span>
+                </div> -->
+                <!-- <div class="btn-group btn-select-state-group">
+                    <span class="btn-loop btn btn-success disabled" title="loop a selected segment of audio">
+                        <i class="fa fa-repeat"></i>
+                    </span>
+                    <span title="keep only the selected audio region for a track"
+                                class="btn-trim-audio btn btn-primary disabled">Trim</span>
+                </div> -->
+                <div class="btn-group">
+                    <!-- <span title="Prints playlist info to console"
+                                class="btn btn-info">Print</span> -->
+                    <span title="Clear the playlist's tracks" class="btn btn-clear btn-danger">Clear</span>
+                </div>
+                <div class="btn-group">
+                    <span title="Download the current work as Wav file" class="btn btn-download btn-primary">
+                        <i class="fa fa-download"></i>
+                    </span>
+                </div>
+                <div id="app" class="btn-group">
+                    <span>{{ event_type }} {{ event_value }}</span>
+                </div>
+            </div>
+        </header>
+        <main>
+            <div id="playlist"></div>
+        </main>
+        <footer>
+            <label class="audio-pos">00:00:00.0</label>
+            <div class="track-drop"></div>
+            <div class="loading-data"></div>
+        </footer>
     </div>
 
     <script type="text/javascript">
@@ -135,15 +237,49 @@
                 el: '#app',
                 data: {
                     event_type: '',
-                    event_value: ''
+                    event_value: '',
+                    playing: false,
+                    // recording: false
                 },
                 methods: {
                     eventReceived: function(event_type, event_value) {
                         // console.log('event received');
+                        this.timeout && clearTimeout(this.timeout);
+
                         this.event_type = event_type;
-                        this.event_value = event_value==="1" ? 'on' : 'off';
+                        if (['left', 'right'].indexOf(this.event_type) !== -1) {
+                            this.event_value = 'pressed';
+                        } else {
+                            if (this.event_type=='play') {
+                                event_value = this.playing ? '0' : '1';
+                                this.playing = event_value==='1';
+                            } else if (['left', 'right'].indexOf(this.event_type)) {
+                                this.playing = false;
+                            }
+
+                            this.event_value = event_value==="1" ? 'on' : 'off';
+                        }
                         console.log(event_type, event_value);
                         console.log(this.event_type, this.event_value);
+
+                        this.timeout = setTimeout(() => {
+                            this.event_type = '';
+                            this.event_value = '';
+                        }, 500);
+
+                        var event_button_map = {
+                            'record=on': 'btn-record',
+                            'record=off': 'btn-stop',
+                            'play=on': 'btn-play',
+                            'play=off': 'btn-pause',
+                            'left=pressed': 'btn-rewind',
+                            'right=pressed': 'btn-fast-forward',
+                        };
+                        var event_key = this.event_type + '=' + this.event_value;
+                        var btn_class = event_button_map[event_key];
+                        if (btn_class) {
+                            $('.' + btn_class).click();
+                        }
                     }
                 }
             });
@@ -154,6 +290,11 @@
             });
         });
     </script>
+
+    <script type="text/javascript" src="/static/js/waveform-playlist.var.js"></script>
+    <script type="text/javascript" src="/static/js/web-audio-editor.js"></script>
+    <!-- <script type="text/javascript" src="/static/js/record.js"></script> -->
+    <script type="text/javascript" src="/static/js/emitter.js"></script>
 
 
     <!-- <h1>Flask-SocketIO Test</h1>

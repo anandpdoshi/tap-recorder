@@ -28,6 +28,7 @@ async def index(request):
     # print(request.args)
     event_type = request.args.get('event_type')
     event_value = request.args.get('event_value')
+
     await sio.emit('event', {
         'event_type': event_type,
         'event_value': event_value
