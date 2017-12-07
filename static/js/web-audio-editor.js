@@ -50,6 +50,21 @@ $(document).ready(function() {
     });
 
     playlist.load([
+        {
+            "src": "/static/Waltz-Trumpet-2.m4a",
+            "name": "Trumpet",
+            "fadeIn": {
+                "duration": 0.5
+            },
+            "fadeOut": {
+                "duration": 0.5
+            },
+            // "cuein": 5.918,
+            // "cueout": 14.5,
+            "customClass": "vocals",
+            "waveOutlineColor": '#c0dce0',
+            "gain": 3
+        },
       // {
       //   "src": "media/audio/Vocals30.mp3",
       //   "name": "Vocals",

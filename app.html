@@ -113,6 +113,15 @@
                 <div id="app" class="btn-group">
                     <span>{{ event_type }} {{ event_value }}</span>
                 </div>
+                <br>
+                <br>
+                <div class="btn-group">
+                    <span>
+                        <audio src="/static/metronome-130-3-4.mp3" type="audio/mp3"  id="metronome" controls>
+
+                        </audio>
+                    </span>
+                </div>
             </div>
         </header>
         <main>
@@ -239,6 +248,7 @@
                     event_type: '',
                     event_value: '',
                     playing: false,
+                    metronome: false
                     // recording: false
                 },
                 methods: {
@@ -255,7 +265,7 @@
                                 event_value = this.playing ? '0' : '1';
                                 this.playing = event_value==='1';
                             }
-                            
+
                             this.event_value = event_value==="1" ? 'on' : 'off';
                         }
                         console.log(event_type, event_value);
@@ -264,7 +274,7 @@
                         this.timeout = setTimeout(() => {
                             this.event_type = '';
                             this.event_value = '';
-                        }, 500);
+                        }, 1000);
 
                         var event_button_map = {
                             'record=on': 'btn-record',
@@ -277,7 +287,55 @@
                         var event_key = this.event_type + '=' + this.event_value;
                         var btn_class = event_button_map[event_key];
                         if (btn_class) {
+                            if (this.event_type === 'play') {
+                                var last_track = window.playlist.tracks[window.playlist.tracks.length - 1];
+                                last_track.ee.emit('solo', last_track);
+                            }
+
                             $('.' + btn_class).click();
+
+                            if (this.event_type === 'record') {
+                                setTimeout(() => {
+                                    console.log('after timeout', this.event_type, this.event_value);
+                                    // if (this.event_value == 'on') {
+                                    //     for (var i=1, l=window.playlist.tracks.length-1; i < l; i++) {
+                                    //         var track = window.playlist.tracks[i];
+                                    //         if (window.playlist.mutedTracks.indexOf(track)===-1) {
+                                    //             track.ee.emit('mute', track);
+                                    //         }
+                                    //     }
+                                    // } else {
+                                    //
+                                    // }
+                                    for (var i=1, l=window.playlist.tracks.length-1; i < l; i++) {
+                                        var track = window.playlist.tracks[i];
+                                        if (this.event_value === 'on') {
+                                            if (window.playlist.mutedTracks.indexOf(track)===-1) {
+                                                track.ee.emit('mute', track);
+                                            }
+                                        } else {
+                                            if (window.playlist.mutedTracks.indexOf(track)!==-1) {
+                                                track.ee.emit('mute', track);
+                                            }
+                                        }
+                                    }
+
+                                    console.log('mute triggered', window.playlist.tracks.length);
+                                }, 400);
+
+                            }
+
+
+                        } else if (this.event_type == 'metronome') {
+                            var _metronome = $('#metronome').get(0);
+                            if (this.metronome) {
+                                _metronome.pause();
+                                _metronome.currentTime = 0;
+                                this.metronome = false;
+                            } else {
+                                _metronome.play();
+                                this.metronome = true;
+                            }
                         }
                     }
                 }
